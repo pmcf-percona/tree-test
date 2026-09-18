@@ -4,11 +4,13 @@ A free, self-hosted tree test in a single HTML file. Participants navigate a tex
 
 ## What is a tree test?
 
-A tree test checks whether people can find things in your navigation when it is stripped of all visual design: just the labels and the hierarchy. You give participants a handful of realistic tasks ("Where would you go to restore yesterday's backup?") and record where they click. Use one before redesigning a menu, when adding a new section and you are not sure where it belongs, or to compare two proposed structures before building either.
+A tree test checks whether people can find things in your navigation when it is stripped of all visual design: just the labels and the hierarchy. You give participants a handful of realistic tasks ("Where would you go to restore yesterday's backup?") and record where they click.
+
+Suggestion: Use one before redesigning a menu, when adding a new section and you are not sure where it belongs, or to compare two proposed structures before building either. Costs very little and will help expand horizons.
 
 ## Try the demo (30 seconds)
 
-Open **<https://YOUR-USERNAME.github.io/YOUR-REPO/>** and click through. The demo tests the command structure of "Keepsafe", a made-up command-line backup tool, with four tasks. Nothing is saved; the last screen shows exactly what would have been recorded.
+Open [the demo from this repo](https://pmcf-percona.github.io/tree-test/) and click through. The demo tests the command structure of "KeepSafe", a made-up command-line backup tool, with four tasks. Nothing is saved; the last screen shows exactly what would have been recorded.
 
 To try it on your own computer, download the repository and double-click `index.html`. It opens in your browser in **test mode**.
 
@@ -46,12 +48,12 @@ If you ever change the script, you must Deploy → Manage deployments → pencil
 
 Any static host works. GitHub Pages is free:
 
-1. Create a new repository (private is fine for the repository, Pages will still be public), e.g. `my-tree-test`.
+1. Create a new repository, e.g. `my-tree-test`.
 2. Upload `index.html` and `logo.svg` together (drag and drop in the GitHub web UI). They must sit in the same folder.
 3. Settings → Pages → Source: Deploy from a branch → `main` / root → Save.
-4. After a minute the URL appears at the top of that page, like `https://<you>.github.io/my-tree-test/`.
+4. After a minute the URL appears at the top of that page, like `https://<your-username>.github.io/my-tree-test/`.
 
-You don't need to upload `apps-script.gs` or this README; participants don't need them.
+You don't need to upload `apps-script.gs` or this README.
 
 ### 4. One link per channel (optional)
 
