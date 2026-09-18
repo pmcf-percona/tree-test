@@ -1,0 +1,17 @@
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Editors and tools
+.vscode/
+.idea/
+.claude/
+*.swp
+
+# Local dependencies and logs, if you ever add any
+node_modules/
+*.log
+
+# Downloaded results: keep them out of the repository
+*.csv
+*.xlsx
