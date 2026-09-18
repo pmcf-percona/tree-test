@@ -3,18 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PMM navigation study</title>
+<title>Navigation study</title>
 <meta name="robots" content="noindex">
 <style>
   :root{
     --bg:#ffffff; --fg:#1d1f22; --muted:#8c9199; --line:#e3e5e8; --hover:#f3f4f6;
-    --accent:#653DF4; --accent-fg:#ffffff; --ok:#1f7a45;
+    --accent:#2f6fed; --accent-fg:#ffffff; --accent-soft:#eef3fd; --ok:#1f7a45;
   }
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--bg);color:var(--fg);
     font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
   .wrap{max-width:620px;margin:0 auto;padding:16px 20px 80px}
-  .logo{display:block;height:120px;width:auto;margin-bottom:24px}
+  .logo{display:block;height:44px;width:auto;margin:8px 0 24px}
+  .logo[hidden]{display:none}
   .progress{height:4px;background:var(--line);border-radius:2px;margin-bottom:28px;overflow:hidden}
   .progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
   h1{font-size:24px;line-height:1.25;margin:0 0 12px;font-weight:650}
@@ -25,7 +26,7 @@
   button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--fg);padding:11px 16px}
   button.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:600}
   button.primary:disabled{opacity:.45;cursor:default}
-  button:focus-visible{outline:3px solid #9db3f0;outline-offset:2px}
+  button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
   .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px;align-items:center}
   .spacer{flex:1}
   .choices{display:flex;flex-direction:column;gap:8px;margin:14px 0 4px}
@@ -36,7 +37,7 @@
   textarea{width:100%;min-height:96px;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:8px;resize:vertical}
   .scale{display:flex;gap:8px;margin:14px 0 6px}
   .scale button{flex:1;padding:14px 0;font-weight:600}
-  .scale button.sel{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .scale button.sel{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
   .scale-labels{display:flex;justify-content:space-between}
   /* task */
   .task{margin:0 0 18px}
@@ -53,7 +54,7 @@
   .node{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;user-select:none}
   .grp + .node{border-top:0}
   .node:hover{background:var(--hover)}
-  .node.sel{background:#eef2fc}
+  .node.sel{background:var(--accent-soft)}
   .node .chev,.back .chev{width:18px;height:18px;flex:none;color:#7c828c}
   .node:hover .chev{color:var(--fg)}
   .node .leaf{width:18px;height:18px;flex:none;border-radius:4px;border:2px solid #9ca1a9;background:#fff;display:inline-flex;align-items:center;justify-content:center;color:#fff}
@@ -73,7 +74,7 @@
 </head>
 <body>
 <div class="wrap">
-  <img class="logo" src="logo.svg" alt="Percona Monitoring and Management">
+  <img class="logo" id="logo" src="" alt="" hidden>
   <div class="progress"><i id="bar"></i></div>
   <div id="app"></div>
 </div>
@@ -81,107 +82,147 @@
 <script>
 /* =========================================================================
    CONFIGURATION — this is the only part you edit
+   =========================================================================
+   The example below tests the command structure of "Keepsafe", a made-up
+   command-line backup tool. Replace the tree, tasks, questions and copy
+   with your own. See README.md for a walkthrough.
    ========================================================================= */
 
-// 1. Paste the Web app URL you get after deploying the Google Apps Script.
-//    Leave empty to run without saving (results shown on screen instead).
-const ENDPOINT = "https://script.google.com/macros/s/AKfycbwopnIAoy9e6IQDEGA-j8UMbPchXuhO1MDjVJ0RmaygaGHUejb0LQ_PIdh-G2pi3-O6_A/exec";
+// 1. Where results are saved.
+//    Paste the Web app URL you get after deploying apps-script.gs to Google Sheets.
+//    Leave empty to run in test mode: nothing is saved, results are shown on screen.
+const ENDPOINT = "";
 
 // 2. Study settings
 const STUDY = {
-  id: "pmm-wayfinding-v1",       // change when you change tree or tasks
-  randomizeTasks: true,
-  passMarks: { success: 0.70, direct: 0.50 } // informational, used in analysis
+  id: "keepsafe-cli-example-v1",  // change this whenever you change the tree or tasks,
+                                  // so old and new responses don't mix
+  title: "Keepsafe command study", // browser tab title
+  logo: "logo.svg",               // path to an image shown at the top, or "" for no logo
+  logoAlt: "Logo",                // text read out by screen readers for the logo
+  accent: "#2f6fed",              // main colour for buttons and highlights (any CSS colour)
+  randomizeTasks: true,           // show tasks in a random order per participant
+  passMarks: { success: 0.70, direct: 0.50 } // informational, used when reading results
 };
 
-// 3. The tree. Root groups (TECHNOLOGIES, …) are non-clickable headings.
-//    Anything with `children` can be opened; anything without is a leaf.
-//    Every node gets an id automatically from its label path, e.g. "MySQL > Add service".
+// 3. The tree: the structure participants navigate.
+//    - Items with `group` are non-clickable headings that only organise the list.
+//    - Items with `children` can be opened; items without are leaves (final destinations).
+//    - Every item gets an id automatically from its label path, e.g. "config > encryption > rotate key".
+//      You use these paths in TASKS below.
 const TREE = [
-  { label: "Home page" },
-  { group: "My navigation", children: [
-    { label: "MongoDB backups" },
-    { label: "MySQL InnoDB details" },
-    { label: "PostgreSQL query analytics" }
+  { group: "Getting started", children: [
+    { label: "init" },
+    { label: "status" }
   ]},
-  { group: "Technologies", children: [
-    { label: "MongoDB hub page" },
-    { label: "MySQL hub page" },
-    { label: "PostgreSQL hub page" },
-    { label: "Valkey hub page" },
-    { label: "Operating system" }
+  { group: "Data", children: [
+    { label: "backup", children: [
+      { label: "create" },
+      { label: "list" },
+      { label: "verify" },
+      { label: "delete" }
+    ]},
+    { label: "restore", children: [
+      { label: "latest" },
+      { label: "from snapshot" },
+      { label: "selected files" }
+    ]}
   ]},
-  { group: "Analysis & alerting", children: [
-    { label: "Advisors" },
-    { label: "Alerts", children: [
-      { label: "Status" }, { label: "Alert rules" }, { label: "Templates" }, { label: "Contact points" }, { label: "Notification policies" }, { label: "Silences" }, { label: "Alert groups" }, { label: "Alert settings" } ]},
-    { label: "Explore data" },
-    { label: "Query analytics" }
+  { group: "Automation", children: [
+    { label: "schedule", children: [
+      { label: "add" },
+      { label: "list" },
+      { label: "pause" },
+      { label: "remove" }
+    ]},
+    { label: "remote", children: [
+      { label: "add" },
+      { label: "list" },
+      { label: "test connection" }
+    ]}
   ]},
-  { group: "Browse", children: [
-    { label: "All dashboards" },
-    { label: "Apps", children: [
-      { label: "Data archiving" }, { label: "MongoDB backups" }, { label: "MySQL backups" }, { label: "PostgreSQL backups" }, { label: "ProxySQL manager" }, { label: "Replication checksums" }, { label: "Schema changes" }, { label: "Support diagnostics" }, { label: "Valkey backups" }, { label: "Get more apps" } ]},
-    { label: "Inventory", children: [ { label: "Services" }, { label: "Nodes" } ]}
-  ]},
-  { group: "Administration", children: [
-    { label: "PMM HA" },
-    { label: "Configuration", children: [
-      { label: "Settings" }, { label: "Updates" },
-      { label: "Org. management", children: [ { label: "Organizations" }, { label: "Stats and licenses" }, { label: "Default preferences" } ] } ]},
-    { label: "Users and access", children: [
-      { label: "Users" }, { label: "Teams" }, { label: "Services accounts" }, { label: "Access roles" } ]},
-    { label: "Account", children: [
-      { label: "Profile" }, { label: "Notification history" }, { label: "Change password" } ]},
-    { label: "Help" }
+  { group: "Settings", children: [
+    { label: "config", children: [
+      { label: "show" },
+      { label: "encryption", children: [
+        { label: "enable" },
+        { label: "rotate key" }
+      ]},
+      { label: "retention", children: [
+        { label: "show policy" },
+        { label: "set policy" }
+      ]}
+    ]},
+    { label: "logs", children: [
+      { label: "tail" },
+      { label: "export" }
+    ]}
   ]}
 ];
 
-// 4. Tasks. `correct` lists accepted destinations, written as label paths with " > ".
-//    A destination matches if the participant's chosen node path equals it,
-//    or (for a parent) if their choice is that node or anything inside it when `deep: true`.
+// 4. Optional: a "pinned" or "recent" shortcut section at the top of the tree.
+//    Use it to simulate a participant who has already bookmarked a few destinations.
+//    Set `enabled: false` to leave it out entirely. Each item becomes a leaf whose
+//    path is "<label> > <item>", e.g. "Recent > restore latest"; list that path in a
+//    task's `correct` if choosing the shortcut should count as a success.
+const PINNED = {
+  enabled: false,
+  label: "Recent",
+  items: ["restore latest", "schedule list"]
+};
+
+// 5. Tasks. `correct` lists accepted destinations, written as label paths joined with " > ".
+//    A destination matches when the participant's chosen path equals it exactly.
+//    Add `deep: true` to a task to also accept anything inside a listed path.
 const TASKS = [
-  { id: "T1", text: "One of your MongoDB clusters is copied to safe storage every night. Check whether last night's copy finished without errors.",
-    correct: ["MongoDB backups", "MongoDB hub page", "Apps > MongoDB backups", "Home page"] },
-  { id: "T2", text: "Users say a PostgreSQL database got slow this morning. Find where you'd see which SQL statements are taking the longest to run.",
-    correct: ["PostgreSQL query analytics", "PostgreSQL hub page", "Query analytics"] },
-  { id: "T3", text: "You've just set up a new MySQL server. Where would you go so PMM starts monitoring it?",
-    correct: ["MySQL hub page", "Inventory > Services"] },
-  { id: "T4", text: "You've just been paged/notified. Find the quickest place to see which of your databases currently have a problem.",
-    correct: ["Home page", "Alerts > Status"] },
-  { id: "T5", text: "You want to be told when replication lag on a MongoDB cluster goes above a threshold. Where would you set that up?",
-    correct: ["Alerts > Alert rules", "Alerts > Templates", "MongoDB hub page"] },
-  { id: "T6", text: "Percona Support asked you to send a diagnostics bundle from your PMM server. Where would you get it?",
-    correct: ["Apps > Support diagnostics"] }
-  // Optional muscle-memory probe — uncomment to include:
-  // ,{ id: "T7", text: "Find the list of configuration and security recommendations PMM has generated for your databases.",
-  //   correct: ["Advisors"], deep: true }
+  { id: "T1", text: "You deleted a file by mistake this morning. Where would you go to restore yesterday's backup?",
+    correct: ["restore > latest", "restore > from snapshot"] },
+  { id: "T2", text: "You want backups to run automatically every night at 2 am. Where would you set that up?",
+    correct: ["schedule > add"] },
+  { id: "T3", text: "You suspect an old backup might be corrupted. Where would you check that a backup is intact?",
+    correct: ["backup > verify"] },
+  { id: "T4", text: "Your security policy says the encryption key must be changed every 90 days. Where would you do that?",
+    correct: ["config > encryption > rotate key"] }
+  // Example of a task that accepts a whole branch:
+  // ,{ id: "T5", text: "Where would you look to see what the tool has been doing recently?",
+  //   correct: ["logs"], deep: true }
 ];
 
-// 5. Questions before and after. Edit copy freely.
+// 6. Questions asked before (PRE) and after (POST) the tasks. Edit or delete freely.
+//    Types: "single" (one choice), "multi" (several choices), "scale" (1 to 5), "text" (free text).
+//    Options: `other: true` adds an "Other" choice with a text box;
+//             `optOut: "…"` adds an exclusive choice such as "None of these";
+//             `optional: true` lets participants skip the question.
 const PRE = [
   { id: "role", type: "single", q: "Which best describes your role?",
-    options: ["DBA / database engineer","SRE / DevOps / platform engineer","Software developer"], other: true },
-  { id: "versions", type: "multi", q: "Which PMM versions have you used?",
-    options: ["PMM 2","PMM 3"], optOut: "I haven't used PMM" }
+    options: ["Software developer", "SRE / DevOps / platform engineer", "System administrator"], other: true },
+  { id: "tools", type: "multi", q: "Which backup tools have you used?",
+    options: ["rsync", "restic", "Borg", "Time Machine or Windows Backup"], optOut: "None of these" }
 ];
 const POST = [
-  { id: "ease", type: "scale", q: "Overall, how easy was it to find things in this menu?", low: "Very hard", high: "Very easy" },
-  { id: "hub_expect", type: "single", q: "If you clicked \"MySQL hub page\" in a database monitoring tool, what would you expect to see?",
-    options: ["A list of dashboards to choose from","A summary page: health, your clusters, and links to apps, tools and actions","The main MySQL dashboard straight away"], other: true },
-  { id: "hardest", type: "text", q: "Which task was hardest, and what did you expect to click instead?", optional: true }
+  { id: "ease", type: "scale", q: "Overall, how easy was it to find things in this command structure?", low: "Very hard", high: "Very easy" },
+  { id: "status_expect", type: "single", q: "If you ran the \"status\" command, what would you expect to see?",
+    options: ["When the last backup ran and whether it succeeded", "A list of all backups", "Whether the tool is installed and configured correctly"], other: true },
+  { id: "hardest", type: "text", q: "Which task was hardest, and what did you expect to find instead?", optional: true }
 ];
 
+// 7. All the text participants read. Edit freely.
 const COPY = {
-  welcomeTitle: "Help us make PMM easier to navigate",
-  welcome: "This takes about 5 minutes. You'll see a text-only version of PMM's (Percona Monitoring and Management) main menu, the sidebar you use to move around between pages. We'll give you a few tasks and ask you to click through and select a page. There are no wrong answers.",
-  welcome2: "Your answers are anonymous unless you choose to get in touch at the end.",
+  welcomeTitle: "Help us organise Keepsafe's commands",
+  welcome: "This takes about 5 minutes. You'll see a text-only version of the command structure of Keepsafe, a command-line backup tool. We'll give you a few tasks and ask you to click through and pick the command you would use. There are no wrong answers.",
+  welcome2: "Your answers are anonymous.",
   start: "Start",
-  taskIntro: "Each task describes something you need to do. Click through the menu the way you would in the real PMM sidebar. When you see the item you believe opens the page you need, select it and click \"I'd find it here\". Go with your instinct.",
-  taskPrompt: "Where in the menu would you click to reach this?",
+  taskIntro: "Each task describes something you need to do. Click through the list the way you would explore the tool's help. When you see the item you believe does what you need, select it and click \"I'd find it here\". Go with your instinct.",
+  taskPrompt: "Where would you click to reach this?",
+  rootLabel: "Commands",             // name of the top level in the breadcrumb and back link
+  hereLabel: "I'd find it here",
+  skipLabel: "Not sure where I'd go",
+  beginLabel: "Begin test",
+  continueLabel: "Continue",
+  backLabel: "‹ Back",
   thanksTitle: "Thanks. That helps a lot.",
-  thanks: "Your answers feed directly into how PMM's navigation will work in the next major release.",
-  thanks2: "Open to a 20-minute follow-up call about how you use PMM? Reply where you found this link or email pedro.fernandes@percona.com.",
+  thanks: "Your answers help us decide how the commands will be organised.",
+  thanks2: "Questions? Reply where you found this link.",
   already: "You've already taken part in this study from this browser. Thank you!"
 };
 
@@ -196,17 +237,35 @@ const doneKey = "tt_done_" + STUDY.id;
 // Open the page with ?reset to forget a previous completion in this browser (handy while testing).
 if (new URLSearchParams(location.search).has("reset")){ localStorage.removeItem(doneKey); history.replaceState(null, "", location.pathname); }
 
+// Apply study settings: title, logo, colour
+document.title = STUDY.title || document.title;
+if (STUDY.accent) document.documentElement.style.setProperty("--accent", STUDY.accent);
+const logoEl = document.getElementById("logo");
+if (STUDY.logo){ logoEl.src = STUDY.logo; logoEl.alt = STUDY.logoAlt || ""; logoEl.hidden = false; }
+
+// Optional pinned section, inserted at the top of the tree
+if (PINNED && PINNED.enabled && PINNED.items && PINNED.items.length){
+  TREE.unshift({ group: PINNED.label || "Pinned", prefix: true, children: PINNED.items.map(l => ({ label: l })) });
+}
+
 // Build lookup: node -> path id, parent, children
 const byPath = new Map();
 function index(nodes, prefix, parent){
   nodes.forEach(n => {
-    if (n.group){ index(n.children, prefix, parent); return; }
+    if (n.group){
+      // groups are headings; a group with `prefix: true` also prefixes its children's paths
+      const p = n.prefix ? (prefix ? prefix + " > " + n.group : n.group) : prefix;
+      index(n.children, p, parent); return;
+    }
     n.path = prefix ? prefix + " > " + n.label : n.label;
     n.parent = parent; byPath.set(n.path, n);
     if (n.children) index(n.children, n.path, n);
   });
 }
 index(TREE, "", null);
+
+// Warn (in the browser console) about task answers that don't exist in the tree
+TASKS.forEach(t => (t.correct || []).forEach(c => { if (!byPath.has(c)) console.warn(`Task ${t.id}: "${c}" is not a path in TREE`); }));
 
 const state = {
   participant: Math.random().toString(36).slice(2,10) + Date.now().toString(36),
@@ -231,7 +290,7 @@ function next(){ step++; go(); }
 // Going back is allowed everywhere except into a finished task (its timing and path are already recorded).
 function canGoBack(){ return step > 0 && !taskSteps.has(step-1); }
 function back(){ if (canGoBack()){ step--; go(); } }
-function backButton(){ const b = el(`<button type="button" id="back">‹ Back</button>`); b.onclick = back; return b; }
+function backButton(){ const b = el(`<button type="button" id="back">${esc(COPY.backLabel || "‹ Back")}</button>`); b.onclick = back; return b; }
 const ICON = {
   right: '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>',
   left:  '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>',
@@ -258,7 +317,7 @@ function renderQuestion(q, store){
   const saved = store[q.id];
   let value = saved !== undefined ? (Array.isArray(saved) ? saved.slice() : saved) : (q.type === "multi" ? [] : null);
   let otherText = store[q.id + "_other"] || "";
-  const btn = el(`<button class="primary" disabled>Continue</button>`);
+  const btn = el(`<button class="primary" disabled>${esc(COPY.continueLabel || "Continue")}</button>`);
   const check = () => { btn.disabled = !(q.optional || (Array.isArray(value) ? value.length : value !== null) ); };
 
   if (q.type === "single" || q.type === "multi"){
@@ -267,7 +326,6 @@ function renderQuestion(q, store){
     if (q.other) opts.push("Other");
     if (q.optOut) opts.push(q.optOut);
     opts.forEach(o => {
-      const isOther = q.other && o === "Other";
       const isOptOut = q.optOut && o === q.optOut;
       const row = el(`<label class="choice"><input type="${q.type==="multi"?"checkbox":"radio"}" name="${q.id}"><span>${esc(o)}</span></label>`);
       const input = row.querySelector("input");
@@ -312,8 +370,8 @@ function renderQuestion(q, store){
 
 function renderTaskIntro(){
   app.appendChild(el(`<div><h2>How the test works</h2><p>${esc(COPY.taskIntro)}</p>
-    <p class="muted small">${TASKS.length} tasks to complete.</p>
-    <div class="actions" id="actions"><span class="spacer"></span><button class="primary" id="go">Begin test</button></div></div>`));
+    <p class="muted small">${TASKS.length} ${TASKS.length === 1 ? "task" : "tasks"} to complete.</p>
+    <div class="actions" id="actions"><span class="spacer"></span><button class="primary" id="go">${esc(COPY.beginLabel || "Begin test")}</button></div></div>`));
   if (canGoBack()) document.getElementById("actions").prepend(backButton());
   document.getElementById("go").onclick = next;
 }
@@ -322,6 +380,7 @@ function renderTask(task, n){
   const rec = { id: task.id, order: n+1, path: [], backs: 0, started: Date.now(), destination: null, outcome: null, ms: 0 };
   let current = null;   // node object or null for root
   let selected = null;  // leaf node awaiting confirm
+  const rootLabel = COPY.rootLabel || "Main menu";
 
   const box = el(`<div>
     <div class="task"><div class="kicker">Task ${n+1} of ${TASKS.length}</div><p>${esc(task.text)}</p><p class="prompt">${esc(COPY.taskPrompt)}</p></div>
@@ -329,8 +388,8 @@ function renderTask(task, n){
     <div class="tree" id="tree"></div>
     <div class="actions" id="actions">
       <span class="spacer"></span>
-      <button id="skip">Not sure where I'd go</button>
-      <button class="primary" id="here" disabled>I'd find it here</button>
+      <button id="skip">${esc(COPY.skipLabel || "Not sure where I'd go")}</button>
+      <button class="primary" id="here" disabled>${esc(COPY.hereLabel || "I'd find it here")}</button>
     </div>
   </div>`);
   app.appendChild(box);
@@ -340,7 +399,7 @@ function renderTask(task, n){
     treeEl.innerHTML = ""; crumbs.innerHTML = "";
     // breadcrumbs
     const chain = []; let c = current; while (c){ chain.unshift(c); c = c.parent; }
-    const root = chain.length ? el(`<a>Main menu</a>`) : el(`<span class="cur">Main menu</span>`);
+    const root = chain.length ? el(`<a>${esc(rootLabel)}</a>`) : el(`<span class="cur">${esc(rootLabel)}</span>`);
     if (chain.length) root.onclick = () => jump(null);
     crumbs.appendChild(root);
     chain.forEach((nd, i) => {
@@ -356,7 +415,7 @@ function renderTask(task, n){
       else drawNode(it);
     });
     if (current){
-      const b = el(`<div class="back">${ICON.left}<span>Back to ${esc(current.parent ? current.parent.label : "main menu")}</span></div>`);
+      const b = el(`<div class="back">${ICON.left}<span>Back to ${esc(current.parent ? current.parent.label : rootLabel.toLowerCase())}</span></div>`);
       b.onclick = () => { rec.backs++; rec.path.push("<back>"); current = current.parent; selected = null; here.disabled = true; draw(); };
       treeEl.appendChild(b);
     }
