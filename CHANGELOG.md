@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Demo tree is now flat: a command-line tool lists commands without sections, so the section headings gave participants a hint they would not get in real life. Headings remain available for products that show them, such as the PMM example.
+- README: explains when to use section headings, describes the four question types with an example, and adds screenshots in `docs/screenshots/`.
+
 ## 0.1 — 2026-09-18
 
 First public version, extracted from an internal navigation study.

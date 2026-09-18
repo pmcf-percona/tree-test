@@ -106,57 +106,54 @@ const STUDY = {
 };
 
 // 3. The tree: the structure participants navigate.
-//    - Items with `group` are non-clickable headings that only organise the list.
 //    - Items with `children` can be opened; items without are leaves (final destinations).
 //    - Every item gets an id automatically from its label path, e.g. "config > encryption > rotate key".
 //      You use these paths in TASKS below.
+//    - Optional: items with `group` are non-clickable headings that only organise the list.
+//      Use them only if the real product shows such headings (a sidebar with sections, for
+//      example). This demo tests a command-line tool, whose help lists commands flat, so it
+//      has none. Headings never become part of an item's id, so adding or removing them does
+//      not change the paths used in TASKS. Example:
+//        { group: "Data", children: [ { label: "backup", children: [ ... ] } ] }
 const TREE = [
-  { group: "Getting started", children: [
-    { label: "init" },
-    { label: "status" }
+  { label: "init" },
+  { label: "status" },
+  { label: "backup", children: [
+    { label: "create" },
+    { label: "list" },
+    { label: "verify" },
+    { label: "delete" }
   ]},
-  { group: "Data", children: [
-    { label: "backup", children: [
-      { label: "create" },
-      { label: "list" },
-      { label: "verify" },
-      { label: "delete" }
+  { label: "restore", children: [
+    { label: "latest" },
+    { label: "from snapshot" },
+    { label: "selected files" }
+  ]},
+  { label: "schedule", children: [
+    { label: "add" },
+    { label: "list" },
+    { label: "pause" },
+    { label: "remove" }
+  ]},
+  { label: "remote", children: [
+    { label: "add" },
+    { label: "list" },
+    { label: "test connection" }
+  ]},
+  { label: "config", children: [
+    { label: "show" },
+    { label: "encryption", children: [
+      { label: "enable" },
+      { label: "rotate key" }
     ]},
-    { label: "restore", children: [
-      { label: "latest" },
-      { label: "from snapshot" },
-      { label: "selected files" }
+    { label: "retention", children: [
+      { label: "show policy" },
+      { label: "set policy" }
     ]}
   ]},
-  { group: "Automation", children: [
-    { label: "schedule", children: [
-      { label: "add" },
-      { label: "list" },
-      { label: "pause" },
-      { label: "remove" }
-    ]},
-    { label: "remote", children: [
-      { label: "add" },
-      { label: "list" },
-      { label: "test connection" }
-    ]}
-  ]},
-  { group: "Settings", children: [
-    { label: "config", children: [
-      { label: "show" },
-      { label: "encryption", children: [
-        { label: "enable" },
-        { label: "rotate key" }
-      ]},
-      { label: "retention", children: [
-        { label: "show policy" },
-        { label: "set policy" }
-      ]}
-    ]},
-    { label: "logs", children: [
-      { label: "tail" },
-      { label: "export" }
-    ]}
+  { label: "logs", children: [
+    { label: "tail" },
+    { label: "export" }
   ]}
 ];
 
